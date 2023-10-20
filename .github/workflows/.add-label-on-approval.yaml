@@ -22,5 +22,5 @@ jobs:
         if: steps.check_approval.outputs.check_approval == 'APPROVED'
         uses: actions/labeler@v2
         with:
-          label: "APPROVED"
+          label: "approved"
 
