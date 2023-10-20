@@ -20,7 +20,12 @@ jobs:
 
       - name: Add Label to Approved PR
         if: steps.check_approval.outputs.check_approval == 'APPROVED'
-        uses: actions/labeler@v2
+        uses: actions/github-script@v6
         with:
-          label: "APPROVED"
-
+          script: |
+            github.rest.issues.addLabels({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ["approved"]
+            })
