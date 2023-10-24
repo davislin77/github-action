@@ -6,11 +6,11 @@
 # https://github.com/actions/labeler
 
 # Add 'approved' label when a PR is approved.
-# 'approved':
-#   - '**'      # foo.js | src/bar.js
-#   - '.*'      # .gitignore
-#   - '.*/**'   # .github/workflows/label.yml
-
 'approved':
-  - src/**/*
+  - '**'      # foo.js | src/bar.js
+  - '.*'      # .gitignore
+  - '.*/**'   # .github/workflows/label.yml
+
+# 'approved':
+#   - src/**/*
 
