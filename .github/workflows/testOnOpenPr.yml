@@ -8,12 +8,12 @@ on:
       - master
 
 jobs:
-  test:
+  unit_test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -24,15 +24,22 @@ jobs:
         run: npm install
 
       - name: Run tests
-        run: npm test
+        run: |
+          result=$(npm test)
+          echo $result
 
       - name: Set PR status
         env:
           GH_TOKEN: ${{ github.token }}
         if: always()  # This step runs regardless of the test results
+        continue-on-error: true
         run: |
-          if [ ${{ job.status }} == 'success' ]; then
-            gh pr review --comment "Unit testing failed, ready for review."
-          else
-            gh pr review --comment "Unit testing failed!"
+          if [[ $GITHUB_REF =~ /pull/([0-9]+)/ ]]; then
+            echo "Unit testing result: ${{ job.status }}"
+            PR_NUMBER="${BASH_REMATCH[1]}"
+            if [ "${{ job.status }}" = 'success' ]; then
+              gh pr review "$PR_NUMBER" --comment --body "Unit testing OK, ready to review"
+            else
+              gh pr review "$PR_NUMBER" --request-changes --body "Unit testing NOK, please fix it."
+            fi
           fi
