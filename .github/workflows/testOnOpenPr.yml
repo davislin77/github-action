@@ -29,7 +29,7 @@ jobs:
         if: always()  # This step runs regardless of the test results
         run: |
           if [ ${{ job.status }} == 'success' ]; then
-            gh pr review --approve --comment "Tests passed, ready for review."
+            gh pr review --comment "Unit testing failed, ready for review."
           else
-            gh pr review --reject --comment "Tests failed, changes need to be addressed."
+            gh pr review --comment "Unit testing failed!"
           fi
