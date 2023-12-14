@@ -1,0 +1,14 @@
+{
+  "name": "github-action-lab",
+  "version": "1.0.0",
+  "description": "This is a playground for testing github actions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vitest": "^1.0.4"
+  }
+}
