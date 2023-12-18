@@ -27,19 +27,67 @@ jobs:
         run: |
           result=$(npm test)
           echo $result
+          
+      # - name: Set PR status
+      #   env:
+      #     GH_TOKEN: ${{ github.token }}
+      #   if: always()  # This step runs regardless of the test results
+      #   continue-on-error: true
+      #   run: |
+      #     if [[ $GITHUB_REF =~ /pull/([0-9]+)/ ]]; then
+      #       echo "Unit testing result: ${{ job.status }}"
+      #       PR_NUMBER="${BASH_REMATCH[1]}"
+      #       if [ "${{ job.status }}" = 'success' ]; then
+      #         gh pr review "$PR_NUMBER" --comment --body "Unit testing OK, ready to review"
+      #       else
+      #         gh pr review "$PR_NUMBER" --request-changes --body "Unit testing NOK, please fix it."
+      #       fi
+      #     fi
 
-      - name: Set PR status
-        env:
-          GH_TOKEN: ${{ github.token }}
-        if: always()  # This step runs regardless of the test results
+      - name: Dismiss approved if test failed
+        if: failure()  # This step runs regardless of the test results
+        uses: actions/github-script@v3
         continue-on-error: true
-        run: |
-          if [[ $GITHUB_REF =~ /pull/([0-9]+)/ ]]; then
-            echo "Unit testing result: ${{ job.status }}"
-            PR_NUMBER="${BASH_REMATCH[1]}"
-            if [ "${{ job.status }}" = 'success' ]; then
-              gh pr review "$PR_NUMBER" --comment --body "Unit testing OK, ready to review"
-            else
-              gh pr review "$PR_NUMBER" --request-changes --body "Unit testing NOK, please fix it."
-            fi
-          fi
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            // 取得 Pull Request 的所有評論
+            const reviews = await github.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+            });
+            
+            // 過濾出已批准的評論
+            const approvedReviews = reviews.data
+              .filter((review) => review.state === 'APPROVED');
+            
+            // 檢查是否有任何已批准的評論
+            if (approvedReviews.length === 0) {
+              console.log('沒有已批准的評論');
+              return;
+            }
+            
+            // 迭代每個已批准的評論
+            for (const approvedReview of approvedReviews) {
+              // 取得評論的 ID
+              const reviewId = approvedReview.id;
+            
+              // 檢查評論的 ID 是否有效
+              if (!Number.isInteger(reviewId)) {
+                console.log(`評論 ID ${reviewId} 無效`);
+                continue;
+              }
+            
+              // 呼叫 API 解除評論
+              const result = await github.pulls.dismissReview({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.issue.number,
+                review_id: reviewId,
+                message: 'dissmiss'
+              });
+            
+              // 記錄解除結果
+              console.log(`解除評論 ID ${reviewId}：${result}`);
+            }
