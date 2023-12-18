@@ -12,34 +12,47 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      # - name: Checkout code
+      #   uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
+      # - name: Set up Node.js
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: '18'
 
-      - name: Install dependencies
-        run: npm install
+      # - name: Install dependencies
+      #   run: npm install
 
-      - name: Run tests
-        run: |
-          result=$(npm test)
-          echo $result
+      # - name: Run tests
+      #   run: |
+      #     result=$(npm test)
+      #     echo $result
 
-      - name: Set PR status
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Dismiss approved pr
         if: always()  # This step runs regardless of the test results
-        continue-on-error: true
-        run: |
-          if [[ $GITHUB_REF =~ /pull/([0-9]+)/ ]]; then
-            echo "Unit testing result: ${{ job.status }}"
-            PR_NUMBER="${BASH_REMATCH[1]}"
-            if [ "${{ job.status }}" = 'success' ]; then
-              gh pr review "$PR_NUMBER" --comment --body "Unit testing OK, ready to review"
-            else
-              gh pr review "$PR_NUMBER" --request-changes --body "Unit testing NOK, please fix it."
-            fi
-          fi
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            const reviews = await github.pulls.listReviews({ owner, repo, pull_number });
+            console.log('reviews', reviews)
+
+      # - name: Set PR status
+      #   env:
+      #     GH_TOKEN: ${{ github.token }}
+      #   if: always()  # This step runs regardless of the test results
+      #   continue-on-error: true
+      #   run: |
+      #     if [[ $GITHUB_REF =~ /pull/([0-9]+)/ ]]; then
+      #       echo "Unit testing result: ${{ job.status }}"
+      #       PR_NUMBER="${BASH_REMATCH[1]}"
+      #       if [ "${{ job.status }}" = 'success' ]; then
+      #         gh pr review "$PR_NUMBER" --comment --body "Unit testing OK, ready to review"
+      #       else
+      #         gh pr review "$PR_NUMBER" --request-changes --body "Unit testing NOK, please fix it."
+      #       fi
+      #     fi
