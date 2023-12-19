@@ -12,3 +12,56 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/labeler@v4
+  
+  doTest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        continue-on-error: true
+        run: |
+          result=$(npm test)
+          echo $result
+
+      # - name: Dismiss approved pr
+      #   if: always()  # This step runs regardless of the test results
+      #   uses: actions/github-script@v3
+      #   with:
+      #     github-token: ${{secrets.GITHUB_TOKEN}}
+      #     script: |
+      #       const owner = context.repo.owner;
+      #       const repo = context.repo.repo;
+      #       const pull_number = context.payload.pull_request.number;
+
+      #       try {
+      #         const reviews = await github.pulls.listReviews({ owner, repo, pull_number });
+      #         const approvedReviewIds = reviews.data
+      #           .filter((review) => review.state === 'APPROVED')
+      #           .map((approvedReview) => approvedReview.id);
+
+      #         for (const reviewId of approvedReviewIds) {
+      #           await github.pulls.createReview({
+      #             owner,
+      #             repo,
+      #             pull_number,
+      #             body: 'Dismissing previous approval',
+      #             event: 'DISMISS',
+      #             review_id: reviewId,
+      #           });
+      #         }
+
+      #         console.log('Dismissed all approved reviews.');
+      #       } catch (error) {
+      #         console.error(`Error dismissing approvals: ${error.message}`);
+      #       }
